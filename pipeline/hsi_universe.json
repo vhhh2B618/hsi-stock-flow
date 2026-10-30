@@ -1,0 +1,783 @@
+{
+  "source": "HSI Sep 2026 After weights + Hang Seng Industry Classification-style sectors",
+  "n_tickers": 95,
+  "hsi_level_ref": 23294.42,
+  "hsi_level_ref_date": "2026-10-30",
+  "weights_as_of": "2026-09 (Sep 2026 After / press 20260821 set)",
+  "sectors_zh": {
+    "Financials": "金融",
+    "Properties & Construction": "地產建築",
+    "Information Technology": "資訊科技",
+    "Consumer Discretionary": "非必需性消費",
+    "Consumer Staples": "必需性消費",
+    "Energy": "能源",
+    "Materials": "原材料",
+    "Industrials": "工業",
+    "Utilities": "公用事業",
+    "Telecommunications": "電訊",
+    "Healthcare": "醫療保健",
+    "Conglomerates": "綜合企業"
+  },
+  "tickers": {
+    "0005.HK": {
+      "name": "HSBC HOLDINGS",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "0005",
+      "weight_pct": 8.0
+    },
+    "0700.HK": {
+      "name": "TENCENT",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0700",
+      "weight_pct": 8.0
+    },
+    "9988.HK": {
+      "name": "BABA - W",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "9988",
+      "weight_pct": 8.0
+    },
+    "0939.HK": {
+      "name": "CCB (H)",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "0939",
+      "weight_pct": 5.14
+    },
+    "1299.HK": {
+      "name": "AIA",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "1299",
+      "weight_pct": 4.46
+    },
+    "1398.HK": {
+      "name": "ICBC (H)",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "1398",
+      "weight_pct": 3.6
+    },
+    "0941.HK": {
+      "name": "CHINA MOBILE",
+      "sector": "Telecommunications",
+      "sector_zh": "電訊",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0941",
+      "weight_pct": 3.02
+    },
+    "0388.HK": {
+      "name": "HKEX",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "0388",
+      "weight_pct": 2.95
+    },
+    "1810.HK": {
+      "name": "XIAOMI - W",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1810",
+      "weight_pct": 2.93
+    },
+    "3690.HK": {
+      "name": "MEITUAN - W",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "3690",
+      "weight_pct": 2.86
+    },
+    "3988.HK": {
+      "name": "BANK OF CHINA (H)",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "3988",
+      "weight_pct": 2.27
+    },
+    "0883.HK": {
+      "name": "CNOOC",
+      "sector": "Energy",
+      "sector_zh": "能源",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0883",
+      "weight_pct": 2.25
+    },
+    "2318.HK": {
+      "name": "PING AN (H)",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "2318",
+      "weight_pct": 2.15
+    },
+    "9999.HK": {
+      "name": "NTES",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "9999",
+      "weight_pct": 2.02
+    },
+    "0981.HK": {
+      "name": "SMIC",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0981",
+      "weight_pct": 1.95
+    },
+    "1211.HK": {
+      "name": "BYD COMPANY (H)",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1211",
+      "weight_pct": 1.95
+    },
+    "6160.HK": {
+      "name": "BEONE MEDICINES",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "",
+      "code": "6160",
+      "weight_pct": 1.6
+    },
+    "0992.HK": {
+      "name": "LENOVO GROUP",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0992",
+      "weight_pct": 1.32
+    },
+    "0857.HK": {
+      "name": "PETROCHINA (H)",
+      "sector": "Energy",
+      "sector_zh": "能源",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0857",
+      "weight_pct": 1.24
+    },
+    "2899.HK": {
+      "name": "ZIJIN MINING (H)",
+      "sector": "Materials",
+      "sector_zh": "原材料",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2899",
+      "weight_pct": 1.23
+    },
+    "0669.HK": {
+      "name": "TECHTRONIC IND",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0669",
+      "weight_pct": 1.2
+    },
+    "2628.HK": {
+      "name": "CHINA LIFE (H)",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "2628",
+      "weight_pct": 1.19
+    },
+    "3968.HK": {
+      "name": "CM BANK (H)",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "3968",
+      "weight_pct": 1.12
+    },
+    "2269.HK": {
+      "name": "WUXI BIO",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2269",
+      "weight_pct": 1.11
+    },
+    "0001.HK": {
+      "name": "CKH HOLDINGS",
+      "sector": "Conglomerates",
+      "sector_zh": "綜合企業",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0001",
+      "weight_pct": 1.1
+    },
+    "2388.HK": {
+      "name": "BOC HONG KONG",
+      "sector": "Financials",
+      "sector_zh": "金融",
+      "hsi_subindex": "Finance",
+      "code": "2388",
+      "weight_pct": 1.1
+    },
+    "0016.HK": {
+      "name": "SHK PPT",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "0016",
+      "weight_pct": 1.03
+    },
+    "9618.HK": {
+      "name": "JD - SW",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "9618",
+      "weight_pct": 1.03
+    },
+    "1801.HK": {
+      "name": "INNOVENT BIO",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "",
+      "code": "1801",
+      "weight_pct": 0.96
+    },
+    "1088.HK": {
+      "name": "CHINA SHENHUA (H)",
+      "sector": "Energy",
+      "sector_zh": "能源",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1088",
+      "weight_pct": 0.84
+    },
+    "9888.HK": {
+      "name": "BIDU - SW",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "9888",
+      "weight_pct": 0.83
+    },
+    "3750.HK": {
+      "name": "CATL (H)",
+      "sector": "Industrials",
+      "sector_zh": "工業",
+      "hsi_subindex": "",
+      "code": "3750",
+      "weight_pct": 0.77
+    },
+    "0002.HK": {
+      "name": "CLP HOLDINGS",
+      "sector": "Utilities",
+      "sector_zh": "公用事業",
+      "hsi_subindex": "Utilities",
+      "code": "0002",
+      "weight_pct": 0.76
+    },
+    "9961.HK": {
+      "name": "TRIP.COM - S",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "9961",
+      "weight_pct": 0.72
+    },
+    "0175.HK": {
+      "name": "GEELY AUTO",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0175",
+      "weight_pct": 0.69
+    },
+    "1024.HK": {
+      "name": "KUAISHOU - W",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1024",
+      "weight_pct": 0.68
+    },
+    "1109.HK": {
+      "name": "CHINA RES LAND",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "1109",
+      "weight_pct": 0.65
+    },
+    "9992.HK": {
+      "name": "POP MART",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "9992",
+      "weight_pct": 0.65
+    },
+    "2020.HK": {
+      "name": "ANTA SPORTS",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2020",
+      "weight_pct": 0.61
+    },
+    "0823.HK": {
+      "name": "LINK REIT",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "0823",
+      "weight_pct": 0.59
+    },
+    "0386.HK": {
+      "name": "SINOPEC CORP (H)",
+      "sector": "Energy",
+      "sector_zh": "能源",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0386",
+      "weight_pct": 0.58
+    },
+    "2359.HK": {
+      "name": "WUXI APPTEC (H)",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2359",
+      "weight_pct": 0.56
+    },
+    "1347.HK": {
+      "name": "HUA HONG GRACE",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "",
+      "code": "1347",
+      "weight_pct": 0.54
+    },
+    "1113.HK": {
+      "name": "CK ASSET",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "1113",
+      "weight_pct": 0.52
+    },
+    "0006.HK": {
+      "name": "POWER ASSETS",
+      "sector": "Utilities",
+      "sector_zh": "公用事業",
+      "hsi_subindex": "Utilities",
+      "code": "0006",
+      "weight_pct": 0.5
+    },
+    "9633.HK": {
+      "name": "NONGFU SPRING (H)",
+      "sector": "Consumer Staples",
+      "sector_zh": "必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "9633",
+      "weight_pct": 0.5
+    },
+    "0003.HK": {
+      "name": "HK & CHINA GAS",
+      "sector": "Utilities",
+      "sector_zh": "公用事業",
+      "hsi_subindex": "Utilities",
+      "code": "0003",
+      "weight_pct": 0.48
+    },
+    "1378.HK": {
+      "name": "CHINAHONGQIAO",
+      "sector": "Materials",
+      "sector_zh": "原材料",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1378",
+      "weight_pct": 0.46
+    },
+    "0267.HK": {
+      "name": "CITIC",
+      "sector": "Industrials",
+      "sector_zh": "工業",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0267",
+      "weight_pct": 0.42
+    },
+    "0027.HK": {
+      "name": "GALAXY ENT",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0027",
+      "weight_pct": 0.41
+    },
+    "1093.HK": {
+      "name": "CSPC PHARMA",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1093",
+      "weight_pct": 0.41
+    },
+    "1519.HK": {
+      "name": "J&T EXPRESS - W",
+      "sector": "Industrials",
+      "sector_zh": "工業",
+      "hsi_subindex": "",
+      "code": "1519",
+      "weight_pct": 0.41
+    },
+    "0288.HK": {
+      "name": "WH GROUP",
+      "sector": "Consumer Staples",
+      "sector_zh": "必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0288",
+      "weight_pct": 0.4
+    },
+    "2057.HK": {
+      "name": "ZTO EXPRESS - W",
+      "sector": "Industrials",
+      "sector_zh": "工業",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2057",
+      "weight_pct": 0.4
+    },
+    "2015.HK": {
+      "name": "LI AUTO - W",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2015",
+      "weight_pct": 0.39
+    },
+    "0066.HK": {
+      "name": "MTR CORPORATION",
+      "sector": "Industrials",
+      "sector_zh": "工業",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0066",
+      "weight_pct": 0.37
+    },
+    "0728.HK": {
+      "name": "CHINA TELECOM (H)",
+      "sector": "Telecommunications",
+      "sector_zh": "電訊",
+      "hsi_subindex": "",
+      "code": "0728",
+      "weight_pct": 0.37
+    },
+    "2338.HK": {
+      "name": "WEICHAI POWER (H)",
+      "sector": "Industrials",
+      "sector_zh": "工業",
+      "hsi_subindex": "",
+      "code": "2338",
+      "weight_pct": 0.37
+    },
+    "3993.HK": {
+      "name": "CMOC (H)",
+      "sector": "Materials",
+      "sector_zh": "原材料",
+      "hsi_subindex": "",
+      "code": "3993",
+      "weight_pct": 0.36
+    },
+    "0300.HK": {
+      "name": "MIDEA GROUP (H)",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0300",
+      "weight_pct": 0.35
+    },
+    "2319.HK": {
+      "name": "MENGNIU DAIRY",
+      "sector": "Consumer Staples",
+      "sector_zh": "必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2319",
+      "weight_pct": 0.33
+    },
+    "0688.HK": {
+      "name": "CHINA OVERSEAS",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "0688",
+      "weight_pct": 0.32
+    },
+    "1997.HK": {
+      "name": "WHARF REIC",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "1997",
+      "weight_pct": 0.32
+    },
+    "3692.HK": {
+      "name": "HANSOH PHARMA",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "3692",
+      "weight_pct": 0.3
+    },
+    "6690.HK": {
+      "name": "HAIER SMARTHOME (H)",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "6690",
+      "weight_pct": 0.3
+    },
+    "1177.HK": {
+      "name": "SBP GROUP",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1177",
+      "weight_pct": 0.29
+    },
+    "6618.HK": {
+      "name": "JD HEALTH",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "6618",
+      "weight_pct": 0.26
+    },
+    "0012.HK": {
+      "name": "HENDERSON LAND",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "0012",
+      "weight_pct": 0.24
+    },
+    "1038.HK": {
+      "name": "CKI HOLDINGS",
+      "sector": "Utilities",
+      "sector_zh": "公用事業",
+      "hsi_subindex": "Utilities",
+      "code": "1038",
+      "weight_pct": 0.24
+    },
+    "2382.HK": {
+      "name": "SUNNY OPTICAL",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2382",
+      "weight_pct": 0.24
+    },
+    "0836.HK": {
+      "name": "CHINA RES POWER",
+      "sector": "Utilities",
+      "sector_zh": "公用事業",
+      "hsi_subindex": "Utilities",
+      "code": "0836",
+      "weight_pct": 0.22
+    },
+    "2688.HK": {
+      "name": "ENN ENERGY",
+      "sector": "Utilities",
+      "sector_zh": "公用事業",
+      "hsi_subindex": "Utilities",
+      "code": "2688",
+      "weight_pct": 0.22
+    },
+    "9901.HK": {
+      "name": "NEW ORIENTAL - S",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "",
+      "code": "9901",
+      "weight_pct": 0.22
+    },
+    "1928.HK": {
+      "name": "SANDS CHINA LTD",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1928",
+      "weight_pct": 0.21
+    },
+    "0291.HK": {
+      "name": "CHINA RES BEER",
+      "sector": "Consumer Staples",
+      "sector_zh": "必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0291",
+      "weight_pct": 0.2
+    },
+    "0762.HK": {
+      "name": "CHINA UNICOM",
+      "sector": "Telecommunications",
+      "sector_zh": "電訊",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0762",
+      "weight_pct": 0.2
+    },
+    "2313.HK": {
+      "name": "SHENZHOU INTL",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2313",
+      "weight_pct": 0.2
+    },
+    "2331.HK": {
+      "name": "LI NING",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2331",
+      "weight_pct": 0.2
+    },
+    "2600.HK": {
+      "name": "CHALCO (H)",
+      "sector": "Materials",
+      "sector_zh": "原材料",
+      "hsi_subindex": "",
+      "code": "2600",
+      "weight_pct": 0.18
+    },
+    "2618.HK": {
+      "name": "JD LOGISTICS",
+      "sector": "Industrials",
+      "sector_zh": "工業",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "2618",
+      "weight_pct": 0.18
+    },
+    "1209.HK": {
+      "name": "CHINA RES MIXC",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "1209",
+      "weight_pct": 0.17
+    },
+    "0322.HK": {
+      "name": "TINGYI",
+      "sector": "Consumer Staples",
+      "sector_zh": "必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0322",
+      "weight_pct": 0.16
+    },
+    "1929.HK": {
+      "name": "CHOW TAI FOOK",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1929",
+      "weight_pct": 0.15
+    },
+    "0316.HK": {
+      "name": "OOIL",
+      "sector": "Industrials",
+      "sector_zh": "工業",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0316",
+      "weight_pct": 0.13
+    },
+    "1099.HK": {
+      "name": "SINOPHARM (H)",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1099",
+      "weight_pct": 0.13
+    },
+    "6181.HK": {
+      "name": "LAOPU GOLD (H)",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "",
+      "code": "6181",
+      "weight_pct": 0.13
+    },
+    "6862.HK": {
+      "name": "HAIDILAO",
+      "sector": "Consumer Discretionary",
+      "sector_zh": "非必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "6862",
+      "weight_pct": 0.13
+    },
+    "0241.HK": {
+      "name": "ALI HEALTH",
+      "sector": "Healthcare",
+      "sector_zh": "醫療保健",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0241",
+      "weight_pct": 0.12
+    },
+    "0868.HK": {
+      "name": "XINYI GLASS",
+      "sector": "Materials",
+      "sector_zh": "原材料",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0868",
+      "weight_pct": 0.12
+    },
+    "0285.HK": {
+      "name": "BYD ELECTRONIC",
+      "sector": "Information Technology",
+      "sector_zh": "資訊科技",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0285",
+      "weight_pct": 0.11
+    },
+    "0960.HK": {
+      "name": "LONGFOR GROUP",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "0960",
+      "weight_pct": 0.09
+    },
+    "1044.HK": {
+      "name": "HENGAN INT'L",
+      "sector": "Consumer Staples",
+      "sector_zh": "必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1044",
+      "weight_pct": 0.09
+    },
+    "0101.HK": {
+      "name": "HANG LUNG PPT",
+      "sector": "Properties & Construction",
+      "sector_zh": "地產建築",
+      "hsi_subindex": "Properties",
+      "code": "0101",
+      "weight_pct": 0.08
+    },
+    "1876.HK": {
+      "name": "BUD APAC",
+      "sector": "Consumer Staples",
+      "sector_zh": "必需性消費",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "1876",
+      "weight_pct": 0.07
+    },
+    "0968.HK": {
+      "name": "XINYI SOLAR",
+      "sector": "Materials",
+      "sector_zh": "原材料",
+      "hsi_subindex": "Commerce & Industry",
+      "code": "0968",
+      "weight_pct": 0.06
+    }
+  }
+}

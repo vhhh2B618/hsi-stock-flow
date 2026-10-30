@@ -1,0 +1,51 @@
+name: Hourly HSI stock-flow refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 09:00–16:00 HKT weekdays → 01:00–08:00 UTC
+    - cron: '0 1-8 * * 1-5'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hsi-stock-flow-hourly
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+      - name: Install deps
+        run: pip install -r pipeline/requirements.txt
+      - name: Fetch + rebuild static Pages files
+        id: publish
+        run: |
+          set +e
+          python pipeline/publish_static.py
+          code=$?
+          if [ "$code" -eq 78 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$code" -ne 0 ]; then exit "$code"; fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+      - name: Commit and push if changed
+        if: steps.publish.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html stock_flow.json stock_flow_live.json stock_flow.csv
+          if git diff --staged --quiet; then
+            echo "No file changes"; exit 0
+          fi
+          git commit -m "chore: refresh HSI stock flow snapshot"
+          git push

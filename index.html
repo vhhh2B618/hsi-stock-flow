@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>恒生成份股資金流 — HSI Stock Flow</title>
+<style>
+  :root {
+    --bg:#0a0a0a; --card:#141414; --text:#f2f2f2; --muted:#9a9a9a;
+    --in:#e74c3c; --out:#2ecc71; --line:#2a2a2a; --accent:#5b9fd4;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans TC", sans-serif; background:var(--bg); color:var(--text); line-height:1.45; }
+  header { padding:1.1rem 1.4rem; border-bottom:1px solid var(--line); background:var(--card); }
+  h1 { margin:0 0 .25rem; font-size:1.25rem; letter-spacing:.02em; }
+  .sub { color:var(--muted); font-size:.85rem; }
+  main { padding:1.1rem 1.4rem 3rem; max-width:1100px; margin:0 auto; }
+  .grid { display:grid; gap:.85rem; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin-bottom:1rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:1rem 1.1rem; }
+  .card h2 { margin:0 0 .55rem; font-size:.95rem; color:var(--muted); font-weight:600; }
+  .meta-val { font-size:1.05rem; font-weight:700; }
+  .clock { font-size:2.2rem; font-weight:800; letter-spacing:.04em; font-variant-numeric:tabular-nums; }
+  .hdr-row { display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; justify-content:space-between; }
+  .btn { background:var(--accent); color:#0b1220; border:0; border-radius:8px; padding:.5rem .9rem; font-weight:700; cursor:pointer; font-size:.88rem; }
+  .btn:disabled { opacity:.55; cursor:wait; }
+  .btn-ghost { background:#222; color:var(--text); border:1px solid var(--line); }
+  .btn-ghost.active { border-color:var(--accent); color:var(--accent); }
+  .mode-bar { display:flex; flex-wrap:wrap; gap:.45rem; margin:.6rem 0 .8rem; }
+  #refreshStatus { font-size:.85rem; color:var(--muted); min-height:1.2em; margin-top:.35rem; }
+  .live-dot { display:inline-block; width:.55rem; height:.55rem; border-radius:50%; background:var(--out); margin-right:.35rem; animation: pulse 1.4s infinite; }
+  .live-dot.off { background:#555; animation:none; }
+  @keyframes pulse { 50% { opacity:.45; } }
+  .legend { display:flex; gap:1.2rem; align-items:center; font-size:.88rem; margin:.4rem 0 0.6rem; color:var(--muted); flex-wrap:wrap; }
+  .swatch { display:inline-block; width:.85rem; height:.85rem; border-radius:3px; margin-right:.35rem; vertical-align:middle; }
+  .swatch.in { background:var(--in); } .swatch.out { background:var(--out); }
+  .bar-row { display:grid; grid-template-columns: 9.5rem 1fr 6.2rem; gap:.45rem; align-items:center; margin:.22rem 0; font-size:.88rem; }
+  .bar-row.pts { grid-template-columns: 9.5rem 4.2rem 3.6rem 1fr 5.2rem; }
+  .bar-label { text-align:right; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar-label .code { color:var(--muted); font-size:.78rem; }
+  .bar-track { position:relative; height:1.45rem; background:#1c1c1c; border-radius:4px; overflow:hidden; }
+  .bar-track::before { content:""; position:absolute; left:50%; top:0; bottom:0; width:1px; background:#333; }
+  .bar-fill { position:absolute; top:2px; bottom:2px; border-radius:3px; transition: width .12s linear, left .12s linear; }
+  .bar-fill.in { background:var(--in); } .bar-fill.out { background:var(--out); }
+  .bar-val { font-variant-numeric:tabular-nums; font-size:.82rem; color:var(--muted); text-align:right; }
+  .bar-val.pos { color:var(--in); } .bar-val.neg { color:var(--out); }
+  .num { font-variant-numeric:tabular-nums; font-size:.8rem; color:var(--muted); text-align:right; }
+  .controls { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-top:.9rem; }
+  input[type=range] { flex:1; min-width:140px; accent-color:var(--accent); }
+  select, .filter input { background:#1a1a1a; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:.4rem .55rem; font-size:.85rem; }
+  footer { margin-top:1.4rem; color:var(--muted); font-size:.78rem; }
+  .warn { color:#e6c07b; }
+  code { background:#222; padding:.1rem .35rem; border-radius:4px; font-size:.78rem; }
+  .unit { font-size:.8rem; color:var(--muted); margin-bottom:.45rem; }
+  .sector-h { margin:1rem 0 .35rem; font-size:.9rem; color:var(--accent); font-weight:700; border-bottom:1px solid var(--line); padding-bottom:.25rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="hdr-row">
+    <div>
+      <h1>恒生成份股資金流 · HSI Stock Flow</h1>
+      <div class="sub">Chaikin estimate · HSI pts impact · 95 names · Yahoo delayed · research only</div>
+    </div>
+    <div style="text-align:right">
+      <button type="button" class="btn" id="btnRefresh">Full rebuild</button>
+      <div id="refreshStatus"><span class="live-dot off" id="liveDot"></span>Starting…</div>
+    </div>
+  </div>
+</header>
+<main>
+  <div class="grid" id="metaCards"></div>
+
+  <div class="mode-bar">
+    <button type="button" class="btn btn-ghost active" data-mode="sector" id="modeSector">A · By sector (Chaikin)</button>
+    <button type="button" class="btn btn-ghost" data-mode="pts" id="modePts">B · HSI pts impact</button>
+    <label class="filter" style="margin-left:auto;display:flex;gap:.4rem;align-items:center">
+      <span class="unit" style="margin:0">Sector</span>
+      <select id="sectorFilter"><option value="">All</option></select>
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="hdr-row" style="margin-bottom:.35rem">
+      <div>
+        <div class="clock" id="clock">--:--</div>
+        <div class="unit" id="sessionLine">—</div>
+        <div class="unit" id="liveClock">Last data: —</div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch in"></span>淨流入 / +pts</span>
+        <span><span class="swatch out"></span>淨流出 / −pts</span>
+      </div>
+    </div>
+    <div class="unit" id="unitLine">單位：百萬港元 · cumulative from open</div>
+    <div id="chart"></div>
+    <div class="controls" id="playControls">
+      <button type="button" class="btn btn-ghost" id="btnPlay">Play</button>
+      <button type="button" class="btn btn-ghost" id="btnReset">Reset</button>
+      <input type="range" id="scrubber" min="0" max="0" value="0" />
+      <span class="unit" id="scrubLabel" style="min-width:4rem">0 / 0</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <h2>Top 5 (current view)</h2>
+    <div id="tops" style="font-size:.9rem"></div>
+  </div>
+
+  <footer>
+    <p class="warn"><strong>Disclaimer：</strong>
+      Yahoo 免費數據有延遲。Chaikin 與 HSI 點數貢獻皆為估算，非交易所逐筆。僅供研究，不構成投資建議。
+    </p>
+    <p><strong>LIVE (~5s)：</strong> <code>cd /workspace/trading/hsi_stock_flow && python3 server.py</code>
+      → open <code>http://127.0.0.1:8768/</code> (soft-polls <code>/api/flow</code>). Quote overlay ~5s; full Chaikin bars ~120s. Backs off to 10–15s if Yahoo rate-limits.</p>
+    <p><strong>GitHub Pages：</strong> delayed cron snapshot only (hourly cash hours) — not true 5s live.</p>
+  </footer>
+</main>
+<script id="data" type="application/json">{"ok": true, "generated_at_hkt": "2026-10-30 19:02:27 HKT", "session_date": "2026-10-30", "session_label": "2026-10-30 (星期五)", "as_of_hkt": "2026-10-30 15:55 HKT", "as_of_clock": "15:55", "hsi_level": 23294.42, "n_tickers_downloaded": 95, "live_poll": null, "top_flow_in": [{"ticker": "1398.HK", "name": "ICBC (H)", "cum_m": 1284.744}, {"ticker": "9988.HK", "name": "BABA - W", "cum_m": 847.636}, {"ticker": "1299.HK", "name": "AIA", "cum_m": 652.413}, {"ticker": "0939.HK", "name": "CCB (H)", "cum_m": 650.114}, {"ticker": "1810.HK", "name": "XIAOMI - W", "cum_m": 615.353}], "top_flow_out": [{"ticker": "1024.HK", "name": "KUAISHOU - W", "cum_m": -637.632}, {"ticker": "9888.HK", "name": "BIDU - SW", "cum_m": -399.96}, {"ticker": "0981.HK", "name": "SMIC", "cum_m": -301.295}, {"ticker": "2269.HK", "name": "WUXI BIO", "cum_m": -169.958}, {"ticker": "1347.HK", "name": "HUA HONG GRACE", "cum_m": -157.299}], "top_pts_up": [{"ticker": "1299.HK", "name": "AIA", "hsi_pts": 45.3274, "pct_chg": 4.3629}, {"ticker": "9988.HK", "name": "BABA - W", "hsi_pts": 40.0448, "pct_chg": 2.1488}, {"ticker": "0700.HK", "name": "TENCENT", "hsi_pts": 35.6281, "pct_chg": 1.9118}, {"ticker": "3690.HK", "name": "MEITUAN - W", "hsi_pts": 24.6033, "pct_chg": 3.693}, {"ticker": "0857.HK", "name": "PETROCHINA (H)", "hsi_pts": 14.8632, "pct_chg": 5.1456}], "top_pts_down": [{"ticker": "0981.HK", "name": "SMIC", "hsi_pts": -6.0649, "pct_chg": -1.3352}, {"ticker": "1801.HK", "name": "INNOVENT BIO", "hsi_pts": -6.0181, "pct_chg": -2.6911}, {"ticker": "2269.HK", "name": "WUXI BIO", "hsi_pts": -5.1485, "pct_chg": -1.9912}, {"ticker": "2628.HK", "name": "CHINA LIFE (H)", "hsi_pts": -5.0152, "pct_chg": -1.8092}, {"ticker": "6160.HK", "name": "BEONE MEDICINES", "hsi_pts": -4.9695, "pct_chg": -1.3333}], "latest_stocks": [{"ticker": "1299.HK", "name": "AIA", "sector": "Financials", "sector_zh": "金融", "weight_pct": 4.46, "open": 72.2, "last": 75.35, "pct_chg": 4.3629, "hsi_pts": 45.3274, "cum_m": 652.413}, {"ticker": "9988.HK", "name": "BABA - W", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 8.0, "open": 95.4, "last": 97.45, "pct_chg": 2.1488, "hsi_pts": 40.0448, "cum_m": 847.636}, {"ticker": "0700.HK", "name": "TENCENT", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 8.0, "open": 376.6, "last": 383.8, "pct_chg": 1.9118, "hsi_pts": 35.6281, "cum_m": 583.843}, {"ticker": "3690.HK", "name": "MEITUAN - W", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 2.86, "open": 69.05, "last": 71.6, "pct_chg": 3.693, "hsi_pts": 24.6033, "cum_m": 159.466}, {"ticker": "0857.HK", "name": "PETROCHINA (H)", "sector": "Energy", "sector_zh": "能源", "weight_pct": 1.24, "open": 10.3, "last": 10.83, "pct_chg": 5.1456, "hsi_pts": 14.8632, "cum_m": 544.596}, {"ticker": "1810.HK", "name": "XIAOMI - W", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 2.93, "open": 26.08, "last": 26.58, "pct_chg": 1.9172, "hsi_pts": 13.0852, "cum_m": 615.353}, {"ticker": "0941.HK", "name": "CHINA MOBILE", "sector": "Telecommunications", "sector_zh": "電訊", "weight_pct": 3.02, "open": 78.5, "last": 79.95, "pct_chg": 1.8471, "hsi_pts": 12.9944, "cum_m": 395.907}, {"ticker": "0883.HK", "name": "CNOOC", "sector": "Energy", "sector_zh": "能源", "weight_pct": 2.25, "open": 24.1, "last": 24.58, "pct_chg": 1.9917, "hsi_pts": 10.439, "cum_m": 196.786}, {"ticker": "1398.HK", "name": "ICBC (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 3.6, "open": 7.82, "last": 7.915, "pct_chg": 1.2148, "hsi_pts": 10.1876, "cum_m": 1284.744}, {"ticker": "0005.HK", "name": "HSBC HOLDINGS", "sector": "Financials", "sector_zh": "金融", "weight_pct": 8.0, "open": 135.4, "last": 136.1, "pct_chg": 0.517, "hsi_pts": 9.6345, "cum_m": 26.541}, {"ticker": "0939.HK", "name": "CCB (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 5.14, "open": 10.19, "last": 10.27, "pct_chg": 0.7851, "hsi_pts": 9.4002, "cum_m": 650.114}, {"ticker": "9999.HK", "name": "NTES", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 2.02, "open": 174.0, "last": 177.2, "pct_chg": 1.8391, "hsi_pts": 8.6537, "cum_m": 146.941}, {"ticker": "2319.HK", "name": "MENGNIU DAIRY", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.33, "open": 18.2, "last": 19.84, "pct_chg": 9.011, "hsi_pts": 6.9269, "cum_m": 204.591}, {"ticker": "0386.HK", "name": "SINOPEC CORP (H)", "sector": "Energy", "sector_zh": "能源", "weight_pct": 0.58, "open": 4.65, "last": 4.86, "pct_chg": 4.5161, "hsi_pts": 6.1016, "cum_m": 491.657}, {"ticker": "9992.HK", "name": "POP MART", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.65, "open": 129.5, "last": 134.7, "pct_chg": 4.0154, "hsi_pts": 6.0799, "cum_m": 120.442}, {"ticker": "0981.HK", "name": "SMIC", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 1.95, "open": 43.44, "last": 42.86, "pct_chg": -1.3352, "hsi_pts": -6.0649, "cum_m": -301.295}, {"ticker": "1801.HK", "name": "INNOVENT BIO", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.96, "open": 81.75, "last": 79.55, "pct_chg": -2.6911, "hsi_pts": -6.0181, "cum_m": -78.835}, {"ticker": "9633.HK", "name": "NONGFU SPRING (H)", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.5, "open": 40.32, "last": 42.34, "pct_chg": 5.0099, "hsi_pts": 5.8352, "cum_m": 159.174}, {"ticker": "0001.HK", "name": "CKH HOLDINGS", "sector": "Conglomerates", "sector_zh": "綜合企業", "weight_pct": 1.1, "open": 64.65, "last": 66.05, "pct_chg": 2.1655, "hsi_pts": 5.5489, "cum_m": -90.18}, {"ticker": "0388.HK", "name": "HKEX", "sector": "Financials", "sector_zh": "金融", "weight_pct": 2.95, "open": 364.6, "last": 367.4, "pct_chg": 0.768, "hsi_pts": 5.2773, "cum_m": 49.953}, {"ticker": "2269.HK", "name": "WUXI BIO", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 1.11, "open": 45.2, "last": 44.3, "pct_chg": -1.9912, "hsi_pts": -5.1485, "cum_m": -169.958}, {"ticker": "2628.HK", "name": "CHINA LIFE (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 1.19, "open": 24.32, "last": 23.88, "pct_chg": -1.8092, "hsi_pts": -5.0152, "cum_m": -31.44}, {"ticker": "2388.HK", "name": "BOC HONG KONG", "sector": "Financials", "sector_zh": "金融", "weight_pct": 1.1, "open": 49.78, "last": 50.75, "pct_chg": 1.9486, "hsi_pts": 4.993, "cum_m": 329.941}, {"ticker": "6160.HK", "name": "BEONE MEDICINES", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 1.6, "open": 225.0, "last": 222.0, "pct_chg": -1.3333, "hsi_pts": -4.9695, "cum_m": -22.858}, {"ticker": "0175.HK", "name": "GEELY AUTO", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.69, "open": 13.4, "last": 13.8, "pct_chg": 2.9851, "hsi_pts": 4.798, "cum_m": -20.465}, {"ticker": "9961.HK", "name": "TRIP.COM - S", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.72, "open": 301.2, "last": 309.6, "pct_chg": 2.7888, "hsi_pts": 4.6774, "cum_m": 39.451}, {"ticker": "2020.HK", "name": "ANTA SPORTS", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.61, "open": 72.0, "last": 74.35, "pct_chg": 3.2639, "hsi_pts": 4.6379, "cum_m": 85.171}, {"ticker": "1109.HK", "name": "CHINA RES LAND", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.65, "open": 29.54, "last": 30.42, "pct_chg": 2.979, "hsi_pts": 4.5106, "cum_m": 146.186}, {"ticker": "0016.HK", "name": "SHK PPT", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 1.03, "open": 107.1, "last": 109.1, "pct_chg": 1.8674, "hsi_pts": 4.4805, "cum_m": 75.895}, {"ticker": "3968.HK", "name": "CM BANK (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 1.12, "open": 53.5, "last": 54.4, "pct_chg": 1.6822, "hsi_pts": 4.3889, "cum_m": 247.569}, {"ticker": "0002.HK", "name": "CLP HOLDINGS", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.76, "open": 75.7, "last": 77.45, "pct_chg": 2.3118, "hsi_pts": 4.0927, "cum_m": 80.561}, {"ticker": "6690.HK", "name": "HAIER SMARTHOME (H)", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.3, "open": 18.84, "last": 19.94, "pct_chg": 5.8386, "hsi_pts": 4.0802, "cum_m": 223.676}, {"ticker": "1024.HK", "name": "KUAISHOU - W", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.68, "open": 25.94, "last": 26.56, "pct_chg": 2.3901, "hsi_pts": 3.786, "cum_m": -637.632}, {"ticker": "6618.HK", "name": "JD HEALTH", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.26, "open": 36.02, "last": 38.18, "pct_chg": 5.9967, "hsi_pts": 3.6319, "cum_m": 60.473}, {"ticker": "9618.HK", "name": "JD - SW", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 1.03, "open": 99.25, "last": 100.7, "pct_chg": 1.461, "hsi_pts": 3.5053, "cum_m": 22.762}, {"ticker": "2359.HK", "name": "WUXI APPTEC (H)", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.56, "open": 191.1, "last": 186.0, "pct_chg": -2.6688, "hsi_pts": -3.4814, "cum_m": -88.994}, {"ticker": "3988.HK", "name": "BANK OF CHINA (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 2.27, "open": 6.18, "last": 6.14, "pct_chg": -0.6472, "hsi_pts": -3.4225, "cum_m": -84.891}, {"ticker": "0669.HK", "name": "TECHTRONIC IND", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 1.2, "open": 132.1, "last": 133.7, "pct_chg": 1.2112, "hsi_pts": 3.3857, "cum_m": 79.879}, {"ticker": "1093.HK", "name": "CSPC PHARMA", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.41, "open": 8.135, "last": 7.855, "pct_chg": -3.4419, "hsi_pts": -3.2873, "cum_m": -128.286}, {"ticker": "1347.HK", "name": "HUA HONG GRACE", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.54, "open": 62.05, "last": 60.55, "pct_chg": -2.4174, "hsi_pts": -3.0409, "cum_m": -157.299}, {"ticker": "1211.HK", "name": "BYD COMPANY (H)", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 1.95, "open": 67.95, "last": 68.4, "pct_chg": 0.6623, "hsi_pts": 3.0083, "cum_m": -59.147}, {"ticker": "0027.HK", "name": "GALAXY ENT", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.41, "open": 31.1, "last": 32.06, "pct_chg": 3.0868, "hsi_pts": 2.9481, "cum_m": 30.933}, {"ticker": "0823.HK", "name": "LINK REIT", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.59, "open": 39.06, "last": 39.72, "pct_chg": 1.6897, "hsi_pts": 2.3223, "cum_m": 56.696}, {"ticker": "1088.HK", "name": "CHINA SHENHUA (H)", "sector": "Energy", "sector_zh": "能源", "weight_pct": 0.84, "open": 42.2, "last": 42.66, "pct_chg": 1.09, "hsi_pts": 2.1329, "cum_m": -5.105}, {"ticker": "0688.HK", "name": "CHINA OVERSEAS", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.32, "open": 12.35, "last": 12.69, "pct_chg": 2.753, "hsi_pts": 2.0522, "cum_m": 90.457}, {"ticker": "0288.HK", "name": "WH GROUP", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.4, "open": 6.22, "last": 6.35, "pct_chg": 2.09, "hsi_pts": 1.9474, "cum_m": 182.242}, {"ticker": "0322.HK", "name": "TINGYI", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.16, "open": 12.01, "last": 12.62, "pct_chg": 5.0791, "hsi_pts": 1.893, "cum_m": 109.536}, {"ticker": "0728.HK", "name": "CHINA TELECOM (H)", "sector": "Telecommunications", "sector_zh": "電訊", "weight_pct": 0.37, "open": 4.41, "last": 4.505, "pct_chg": 2.1542, "hsi_pts": 1.8567, "cum_m": -7.196}, {"ticker": "0291.HK", "name": "CHINA RES BEER", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.2, "open": 18.98, "last": 19.73, "pct_chg": 3.9515, "hsi_pts": 1.841, "cum_m": 18.378}, {"ticker": "1997.HK", "name": "WHARF REIC", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.32, "open": 30.52, "last": 31.26, "pct_chg": 2.4246, "hsi_pts": 1.8074, "cum_m": 17.341}, {"ticker": "0992.HK", "name": "LENOVO GROUP", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 1.32, "open": 20.6, "last": 20.48, "pct_chg": -0.5825, "hsi_pts": -1.7912, "cum_m": 344.933}, {"ticker": "0006.HK", "name": "POWER ASSETS", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.5, "open": 62.85, "last": 63.8, "pct_chg": 1.5115, "hsi_pts": 1.7605, "cum_m": 46.96}, {"ticker": "1209.HK", "name": "CHINA RES MIXC", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.17, "open": 38.22, "last": 39.78, "pct_chg": 4.0816, "hsi_pts": 1.6163, "cum_m": 12.038}, {"ticker": "3750.HK", "name": "CATL (H)", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.77, "open": 336.0, "last": 339.0, "pct_chg": 0.8929, "hsi_pts": 1.6015, "cum_m": -93.685}, {"ticker": "1038.HK", "name": "CKI HOLDINGS", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.24, "open": 68.75, "last": 70.7, "pct_chg": 2.8364, "hsi_pts": 1.5857, "cum_m": 29.766}, {"ticker": "1378.HK", "name": "CHINAHONGQIAO", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.46, "open": 19.98, "last": 20.26, "pct_chg": 1.4014, "hsi_pts": 1.5017, "cum_m": -155.567}, {"ticker": "0066.HK", "name": "MTR CORPORATION", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.37, "open": 32.68, "last": 33.24, "pct_chg": 1.7136, "hsi_pts": 1.4769, "cum_m": -11.62}, {"ticker": "3692.HK", "name": "HANSOH PHARMA", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.3, "open": 33.18, "last": 32.48, "pct_chg": -2.1097, "hsi_pts": -1.4743, "cum_m": 28.889}, {"ticker": "2899.HK", "name": "ZIJIN MINING (H)", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 1.23, "open": 28.0, "last": 27.86, "pct_chg": -0.5, "hsi_pts": -1.4326, "cum_m": 82.803}, {"ticker": "2015.HK", "name": "LI AUTO - W", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.39, "open": 43.54, "last": 42.86, "pct_chg": -1.5618, "hsi_pts": -1.4189, "cum_m": -77.394}, {"ticker": "2318.HK", "name": "PING AN (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 2.15, "open": 49.62, "last": 49.76, "pct_chg": 0.2821, "hsi_pts": 1.4131, "cum_m": -104.718}, {"ticker": "0003.HK", "name": "HK & CHINA GAS", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.48, "open": 7.17, "last": 7.255, "pct_chg": 1.1855, "hsi_pts": 1.3255, "cum_m": 42.248}, {"ticker": "0836.HK", "name": "CHINA RES POWER", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.22, "open": 19.5, "last": 20.0, "pct_chg": 2.5641, "hsi_pts": 1.314, "cum_m": 93.662}, {"ticker": "2338.HK", "name": "WEICHAI POWER (H)", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.37, "open": 23.16, "last": 23.5, "pct_chg": 1.468, "hsi_pts": 1.2653, "cum_m": 78.213}, {"ticker": "2313.HK", "name": "SHENZHOU INTL", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.2, "open": 37.24, "last": 38.24, "pct_chg": 2.6853, "hsi_pts": 1.251, "cum_m": 59.378}, {"ticker": "2331.HK", "name": "LI NING", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.2, "open": 13.43, "last": 13.77, "pct_chg": 2.5316, "hsi_pts": 1.1795, "cum_m": 28.754}, {"ticker": "6862.HK", "name": "HAIDILAO", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.13, "open": 9.075, "last": 9.42, "pct_chg": 3.8017, "hsi_pts": 1.1512, "cum_m": 27.878}, {"ticker": "1113.HK", "name": "CK ASSET", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.52, "open": 45.7, "last": 46.12, "pct_chg": 0.919, "hsi_pts": 1.1132, "cum_m": 34.895}, {"ticker": "0316.HK", "name": "OOIL", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.13, "open": 153.3, "last": 158.8, "pct_chg": 3.5877, "hsi_pts": 1.0865, "cum_m": 4.592}, {"ticker": "1044.HK", "name": "HENGAN INT'L", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.09, "open": 20.14, "last": 21.1, "pct_chg": 4.7666, "hsi_pts": 0.9993, "cum_m": 25.767}, {"ticker": "0868.HK", "name": "XINYI GLASS", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.12, "open": 7.845, "last": 8.09, "pct_chg": 3.123, "hsi_pts": 0.873, "cum_m": 26.898}, {"ticker": "1929.HK", "name": "CHOW TAI FOOK", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.15, "open": 10.76, "last": 11.02, "pct_chg": 2.4164, "hsi_pts": 0.8443, "cum_m": 5.763}, {"ticker": "2688.HK", "name": "ENN ENERGY", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.22, "open": 48.02, "last": 48.7, "pct_chg": 1.4161, "hsi_pts": 0.7257, "cum_m": 2.551}, {"ticker": "0267.HK", "name": "CITIC", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.42, "open": 12.2, "last": 12.29, "pct_chg": 0.7377, "hsi_pts": 0.7217, "cum_m": -27.961}, {"ticker": "1928.HK", "name": "SANDS CHINA LTD", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.21, "open": 10.51, "last": 10.66, "pct_chg": 1.4272, "hsi_pts": 0.6982, "cum_m": 44.433}, {"ticker": "1876.HK", "name": "BUD APAC", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.07, "open": 5.66, "last": 5.88, "pct_chg": 3.8869, "hsi_pts": 0.6338, "cum_m": 0.182}, {"ticker": "0300.HK", "name": "MIDEA GROUP (H)", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.35, "open": 97.35, "last": 96.6, "pct_chg": -0.7704, "hsi_pts": -0.6281, "cum_m": 360.375}, {"ticker": "0241.HK", "name": "ALI HEALTH", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.12, "open": 2.765, "last": 2.825, "pct_chg": 2.17, "hsi_pts": 0.6066, "cum_m": 30.009}, {"ticker": "3993.HK", "name": "CMOC (H)", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.36, "open": 12.22, "last": 12.3, "pct_chg": 0.6547, "hsi_pts": 0.549, "cum_m": -14.24}, {"ticker": "0012.HK", "name": "HENDERSON LAND", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.24, "open": 27.78, "last": 28.04, "pct_chg": 0.9359, "hsi_pts": 0.5232, "cum_m": 8.282}, {"ticker": "1177.HK", "name": "SBP GROUP", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.29, "open": 4.85, "last": 4.815, "pct_chg": -0.7216, "hsi_pts": -0.4875, "cum_m": -12.402}, {"ticker": "2057.HK", "name": "ZTO EXPRESS - W", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.4, "open": 156.5, "last": 157.2, "pct_chg": 0.4473, "hsi_pts": 0.4168, "cum_m": 64.6}, {"ticker": "0285.HK", "name": "BYD ELECTRONIC", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.11, "open": 22.18, "last": 21.82, "pct_chg": -1.6231, "hsi_pts": -0.4159, "cum_m": -8.82}, {"ticker": "0762.HK", "name": "CHINA UNICOM", "sector": "Telecommunications", "sector_zh": "電訊", "weight_pct": 0.2, "open": 5.155, "last": 5.2, "pct_chg": 0.8729, "hsi_pts": 0.4067, "cum_m": -79.56}, {"ticker": "9901.HK", "name": "NEW ORIENTAL - S", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.22, "open": 38.26, "last": 38.54, "pct_chg": 0.7318, "hsi_pts": 0.3751, "cum_m": 12.427}, {"ticker": "1519.HK", "name": "J&T EXPRESS - W", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.41, "open": 8.95, "last": 8.985, "pct_chg": 0.3911, "hsi_pts": 0.3735, "cum_m": -2.67}, {"ticker": "2600.HK", "name": "CHALCO (H)", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.18, "open": 7.05, "last": 7.11, "pct_chg": 0.8511, "hsi_pts": 0.3569, "cum_m": -15.481}, {"ticker": "1099.HK", "name": "SINOPHARM (H)", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.13, "open": 16.1, "last": 16.24, "pct_chg": 0.8696, "hsi_pts": 0.2633, "cum_m": 26.599}, {"ticker": "9888.HK", "name": "BIDU - SW", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.83, "open": 75.85, "last": 75.95, "pct_chg": 0.1318, "hsi_pts": 0.2549, "cum_m": -399.96}, {"ticker": "0101.HK", "name": "HANG LUNG PPT", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.08, "open": 6.14, "last": 6.18, "pct_chg": 0.6515, "hsi_pts": 0.1214, "cum_m": 10.745}, {"ticker": "0968.HK", "name": "XINYI SOLAR", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.06, "open": 1.84, "last": 1.855, "pct_chg": 0.8152, "hsi_pts": 0.1139, "cum_m": 11.094}, {"ticker": "2382.HK", "name": "SUNNY OPTICAL", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.24, "open": 63.5, "last": 63.4, "pct_chg": -0.1575, "hsi_pts": -0.088, "cum_m": 28.329}, {"ticker": "6181.HK", "name": "LAOPU GOLD (H)", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.13, "open": 274.0, "last": 274.6, "pct_chg": 0.219, "hsi_pts": 0.0663, "cum_m": -11.444}, {"ticker": "0960.HK", "name": "LONGFOR GROUP", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.09, "open": 4.53, "last": 4.53, "pct_chg": 0.0, "hsi_pts": 0.0, "cum_m": -15.283}, {"ticker": "2618.HK", "name": "JD LOGISTICS", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.18, "open": 9.855, "last": 9.855, "pct_chg": 0.0, "hsi_pts": 0.0, "cum_m": 1.623}], "latest": {"timestamp_hkt": "2026-10-30 15:55", "clock": "15:55", "stocks": {"0001.HK": {"name": "CKH HOLDINGS", "sector": "Conglomerates", "sector_zh": "綜合企業", "weight_pct": 1.1, "cum_m": -90.18, "bar_m": -75.897, "open": 64.65, "last": 66.05, "pct_chg": 2.1655, "hsi_pts": 5.5489}, "0002.HK": {"name": "CLP HOLDINGS", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.76, "cum_m": 80.561, "bar_m": 12.108, "open": 75.7, "last": 77.45, "pct_chg": 2.3118, "hsi_pts": 4.0927}, "0003.HK": {"name": "HK & CHINA GAS", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.48, "cum_m": 42.248, "bar_m": -1.342, "open": 7.17, "last": 7.255, "pct_chg": 1.1855, "hsi_pts": 1.3255}, "0005.HK": {"name": "HSBC HOLDINGS", "sector": "Financials", "sector_zh": "金融", "weight_pct": 8.0, "cum_m": 26.541, "bar_m": -57.755, "open": 135.4, "last": 136.1, "pct_chg": 0.517, "hsi_pts": 9.6345}, "0006.HK": {"name": "POWER ASSETS", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.5, "cum_m": 46.96, "bar_m": 8.704, "open": 62.85, "last": 63.8, "pct_chg": 1.5115, "hsi_pts": 1.7605}, "0012.HK": {"name": "HENDERSON LAND", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.24, "cum_m": 8.282, "bar_m": 2.28, "open": 27.78, "last": 28.04, "pct_chg": 0.9359, "hsi_pts": 0.5232}, "0016.HK": {"name": "SHK PPT", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 1.03, "cum_m": 75.895, "bar_m": 5.288, "open": 107.1, "last": 109.1, "pct_chg": 1.8674, "hsi_pts": 4.4805}, "0027.HK": {"name": "GALAXY ENT", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.41, "cum_m": 30.933, "bar_m": 14.825, "open": 31.1, "last": 32.06, "pct_chg": 3.0868, "hsi_pts": 2.9481}, "0066.HK": {"name": "MTR CORPORATION", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.37, "cum_m": -11.62, "bar_m": -1.496, "open": 32.68, "last": 33.24, "pct_chg": 1.7136, "hsi_pts": 1.4769}, "0101.HK": {"name": "HANG LUNG PPT", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.08, "cum_m": 10.745, "bar_m": -0.0, "open": 6.14, "last": 6.18, "pct_chg": 0.6515, "hsi_pts": 0.1214}, "0175.HK": {"name": "GEELY AUTO", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.69, "cum_m": -20.465, "bar_m": -18.92, "open": 13.4, "last": 13.8, "pct_chg": 2.9851, "hsi_pts": 4.798}, "0241.HK": {"name": "ALI HEALTH", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.12, "cum_m": 30.009, "bar_m": 0.0, "open": 2.765, "last": 2.825, "pct_chg": 2.17, "hsi_pts": 0.6066}, "0267.HK": {"name": "CITIC", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.42, "cum_m": -27.961, "bar_m": -8.769, "open": 12.2, "last": 12.29, "pct_chg": 0.7377, "hsi_pts": 0.7217}, "0285.HK": {"name": "BYD ELECTRONIC", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.11, "cum_m": -8.82, "bar_m": -3.514, "open": 22.18, "last": 21.82, "pct_chg": -1.6231, "hsi_pts": -0.4159}, "0288.HK": {"name": "WH GROUP", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.4, "cum_m": 182.242, "bar_m": -0.0, "open": 6.22, "last": 6.35, "pct_chg": 2.09, "hsi_pts": 1.9474}, "0291.HK": {"name": "CHINA RES BEER", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.2, "cum_m": 18.378, "bar_m": -2.326, "open": 18.98, "last": 19.73, "pct_chg": 3.9515, "hsi_pts": 1.841}, "0300.HK": {"name": "MIDEA GROUP (H)", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.35, "cum_m": 360.375, "bar_m": -3.192, "open": 97.35, "last": 96.6, "pct_chg": -0.7704, "hsi_pts": -0.6281}, "0316.HK": {"name": "OOIL", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.13, "cum_m": 4.592, "bar_m": 8.413, "open": 153.3, "last": 158.8, "pct_chg": 3.5877, "hsi_pts": 1.0865}, "0322.HK": {"name": "TINGYI", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.16, "cum_m": 109.536, "bar_m": 8.955, "open": 12.01, "last": 12.62, "pct_chg": 5.0791, "hsi_pts": 1.893}, "0386.HK": {"name": "SINOPEC CORP (H)", "sector": "Energy", "sector_zh": "能源", "weight_pct": 0.58, "cum_m": 491.657, "bar_m": 0.002, "open": 4.65, "last": 4.86, "pct_chg": 4.5161, "hsi_pts": 6.1016}, "0388.HK": {"name": "HKEX", "sector": "Financials", "sector_zh": "金融", "weight_pct": 2.95, "cum_m": 49.953, "bar_m": -14.876, "open": 364.6, "last": 367.4, "pct_chg": 0.768, "hsi_pts": 5.2773}, "0669.HK": {"name": "TECHTRONIC IND", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 1.2, "cum_m": 79.879, "bar_m": 22.163, "open": 132.1, "last": 133.7, "pct_chg": 1.2112, "hsi_pts": 3.3857}, "0688.HK": {"name": "CHINA OVERSEAS", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.32, "cum_m": 90.457, "bar_m": -3.962, "open": 12.35, "last": 12.69, "pct_chg": 2.753, "hsi_pts": 2.0522}, "0700.HK": {"name": "TENCENT", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 8.0, "cum_m": 583.843, "bar_m": -55.743, "open": 376.6, "last": 383.8, "pct_chg": 1.9118, "hsi_pts": 35.6281}, "0728.HK": {"name": "CHINA TELECOM (H)", "sector": "Telecommunications", "sector_zh": "電訊", "weight_pct": 0.37, "cum_m": -7.196, "bar_m": 8.27, "open": 4.41, "last": 4.505, "pct_chg": 2.1542, "hsi_pts": 1.8567}, "0762.HK": {"name": "CHINA UNICOM", "sector": "Telecommunications", "sector_zh": "電訊", "weight_pct": 0.2, "cum_m": -79.56, "bar_m": -2.958, "open": 5.155, "last": 5.2, "pct_chg": 0.8729, "hsi_pts": 0.4067}, "0823.HK": {"name": "LINK REIT", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.59, "cum_m": 56.696, "bar_m": 0.0, "open": 39.06, "last": 39.72, "pct_chg": 1.6897, "hsi_pts": 2.3223}, "0836.HK": {"name": "CHINA RES POWER", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.22, "cum_m": 93.662, "bar_m": 4.916, "open": 19.5, "last": 20.0, "pct_chg": 2.5641, "hsi_pts": 1.314}, "0857.HK": {"name": "PETROCHINA (H)", "sector": "Energy", "sector_zh": "能源", "weight_pct": 1.24, "cum_m": 544.596, "bar_m": 43.163, "open": 10.3, "last": 10.83, "pct_chg": 5.1456, "hsi_pts": 14.8632}, "0868.HK": {"name": "XINYI GLASS", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.12, "cum_m": 26.898, "bar_m": 1.068, "open": 7.845, "last": 8.09, "pct_chg": 3.123, "hsi_pts": 0.873}, "0883.HK": {"name": "CNOOC", "sector": "Energy", "sector_zh": "能源", "weight_pct": 2.25, "cum_m": 196.786, "bar_m": -35.64, "open": 24.1, "last": 24.58, "pct_chg": 1.9917, "hsi_pts": 10.439}, "0939.HK": {"name": "CCB (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 5.14, "cum_m": 650.114, "bar_m": 0.002, "open": 10.19, "last": 10.27, "pct_chg": 0.7851, "hsi_pts": 9.4002}, "0941.HK": {"name": "CHINA MOBILE", "sector": "Telecommunications", "sector_zh": "電訊", "weight_pct": 3.02, "cum_m": 395.907, "bar_m": -0.003, "open": 78.5, "last": 79.95, "pct_chg": 1.8471, "hsi_pts": 12.9944}, "0960.HK": {"name": "LONGFOR GROUP", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.09, "cum_m": -15.283, "bar_m": -3.329, "open": 4.53, "last": 4.53, "pct_chg": 0.0, "hsi_pts": 0.0}, "0968.HK": {"name": "XINYI SOLAR", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.06, "cum_m": 11.094, "bar_m": 3.777, "open": 1.84, "last": 1.855, "pct_chg": 0.8152, "hsi_pts": 0.1139}, "0981.HK": {"name": "SMIC", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 1.95, "cum_m": -301.295, "bar_m": -46.968, "open": 43.44, "last": 42.86, "pct_chg": -1.3352, "hsi_pts": -6.0649}, "0992.HK": {"name": "LENOVO GROUP", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 1.32, "cum_m": 344.933, "bar_m": 72.721, "open": 20.6, "last": 20.48, "pct_chg": -0.5825, "hsi_pts": -1.7912}, "1024.HK": {"name": "KUAISHOU - W", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.68, "cum_m": -637.632, "bar_m": 2.474, "open": 25.94, "last": 26.56, "pct_chg": 2.3901, "hsi_pts": 3.786}, "1038.HK": {"name": "CKI HOLDINGS", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.24, "cum_m": 29.766, "bar_m": 3.815, "open": 68.75, "last": 70.7, "pct_chg": 2.8364, "hsi_pts": 1.5857}, "1044.HK": {"name": "HENGAN INT'L", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.09, "cum_m": 25.767, "bar_m": 2.078, "open": 20.14, "last": 21.1, "pct_chg": 4.7666, "hsi_pts": 0.9993}, "1088.HK": {"name": "CHINA SHENHUA (H)", "sector": "Energy", "sector_zh": "能源", "weight_pct": 0.84, "cum_m": -5.105, "bar_m": 12.873, "open": 42.2, "last": 42.66, "pct_chg": 1.09, "hsi_pts": 2.1329}, "1093.HK": {"name": "CSPC PHARMA", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.41, "cum_m": -128.286, "bar_m": -2.371, "open": 8.135, "last": 7.855, "pct_chg": -3.4419, "hsi_pts": -3.2873}, "1099.HK": {"name": "SINOPHARM (H)", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.13, "cum_m": 26.599, "bar_m": 1.596, "open": 16.1, "last": 16.24, "pct_chg": 0.8696, "hsi_pts": 0.2633}, "1109.HK": {"name": "CHINA RES LAND", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.65, "cum_m": 146.186, "bar_m": -1.247, "open": 29.54, "last": 30.42, "pct_chg": 2.979, "hsi_pts": 4.5106}, "1113.HK": {"name": "CK ASSET", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.52, "cum_m": 34.895, "bar_m": 2.574, "open": 45.7, "last": 46.12, "pct_chg": 0.919, "hsi_pts": 1.1132}, "1177.HK": {"name": "SBP GROUP", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.29, "cum_m": -12.402, "bar_m": -8.676, "open": 4.85, "last": 4.815, "pct_chg": -0.7216, "hsi_pts": -0.4875}, "1209.HK": {"name": "CHINA RES MIXC", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.17, "cum_m": 12.038, "bar_m": -1.784, "open": 38.22, "last": 39.78, "pct_chg": 4.0816, "hsi_pts": 1.6163}, "1211.HK": {"name": "BYD COMPANY (H)", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 1.95, "cum_m": -59.147, "bar_m": 0.0, "open": 67.95, "last": 68.4, "pct_chg": 0.6623, "hsi_pts": 3.0083}, "1299.HK": {"name": "AIA", "sector": "Financials", "sector_zh": "金融", "weight_pct": 4.46, "cum_m": 652.413, "bar_m": 0.0, "open": 72.2, "last": 75.35, "pct_chg": 4.3629, "hsi_pts": 45.3274}, "1347.HK": {"name": "HUA HONG GRACE", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.54, "cum_m": -157.299, "bar_m": -20.725, "open": 62.05, "last": 60.55, "pct_chg": -2.4174, "hsi_pts": -3.0409}, "1378.HK": {"name": "CHINAHONGQIAO", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.46, "cum_m": -155.567, "bar_m": -25.604, "open": 19.98, "last": 20.26, "pct_chg": 1.4014, "hsi_pts": 1.5017}, "1398.HK": {"name": "ICBC (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 3.6, "cum_m": 1284.744, "bar_m": 44.237, "open": 7.82, "last": 7.915, "pct_chg": 1.2148, "hsi_pts": 10.1876}, "1519.HK": {"name": "J&T EXPRESS - W", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.41, "cum_m": -2.67, "bar_m": 4.464, "open": 8.95, "last": 8.985, "pct_chg": 0.3911, "hsi_pts": 0.3735}, "1801.HK": {"name": "INNOVENT BIO", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.96, "cum_m": -78.835, "bar_m": -5.541, "open": 81.75, "last": 79.55, "pct_chg": -2.6911, "hsi_pts": -6.0181}, "1810.HK": {"name": "XIAOMI - W", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 2.93, "cum_m": 615.353, "bar_m": 78.694, "open": 26.08, "last": 26.58, "pct_chg": 1.9172, "hsi_pts": 13.0852}, "1876.HK": {"name": "BUD APAC", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.07, "cum_m": 0.182, "bar_m": 0.0, "open": 5.66, "last": 5.88, "pct_chg": 3.8869, "hsi_pts": 0.6338}, "1928.HK": {"name": "SANDS CHINA LTD", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.21, "cum_m": 44.433, "bar_m": 0.0, "open": 10.51, "last": 10.66, "pct_chg": 1.4272, "hsi_pts": 0.6982}, "1929.HK": {"name": "CHOW TAI FOOK", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.15, "cum_m": 5.763, "bar_m": -0.383, "open": 10.76, "last": 11.02, "pct_chg": 2.4164, "hsi_pts": 0.8443}, "1997.HK": {"name": "WHARF REIC", "sector": "Properties & Construction", "sector_zh": "地產建築", "weight_pct": 0.32, "cum_m": 17.341, "bar_m": 2.78, "open": 30.52, "last": 31.26, "pct_chg": 2.4246, "hsi_pts": 1.8074}, "2015.HK": {"name": "LI AUTO - W", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.39, "cum_m": -77.394, "bar_m": -4.314, "open": 43.54, "last": 42.86, "pct_chg": -1.5618, "hsi_pts": -1.4189}, "2020.HK": {"name": "ANTA SPORTS", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.61, "cum_m": 85.171, "bar_m": -7.035, "open": 72.0, "last": 74.35, "pct_chg": 3.2639, "hsi_pts": 4.6379}, "2057.HK": {"name": "ZTO EXPRESS - W", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.4, "cum_m": 64.6, "bar_m": 0.0, "open": 156.5, "last": 157.2, "pct_chg": 0.4473, "hsi_pts": 0.4168}, "2269.HK": {"name": "WUXI BIO", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 1.11, "cum_m": -169.958, "bar_m": -3.466, "open": 45.2, "last": 44.3, "pct_chg": -1.9912, "hsi_pts": -5.1485}, "2313.HK": {"name": "SHENZHOU INTL", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.2, "cum_m": 59.378, "bar_m": -5.124, "open": 37.24, "last": 38.24, "pct_chg": 2.6853, "hsi_pts": 1.251}, "2318.HK": {"name": "PING AN (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 2.15, "cum_m": -104.718, "bar_m": 21.328, "open": 49.62, "last": 49.76, "pct_chg": 0.2821, "hsi_pts": 1.4131}, "2319.HK": {"name": "MENGNIU DAIRY", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.33, "cum_m": 204.591, "bar_m": 2.948, "open": 18.2, "last": 19.84, "pct_chg": 9.011, "hsi_pts": 6.9269}, "2331.HK": {"name": "LI NING", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.2, "cum_m": 28.754, "bar_m": 0.001, "open": 13.43, "last": 13.77, "pct_chg": 2.5316, "hsi_pts": 1.1795}, "2338.HK": {"name": "WEICHAI POWER (H)", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.37, "cum_m": 78.213, "bar_m": -3.377, "open": 23.16, "last": 23.5, "pct_chg": 1.468, "hsi_pts": 1.2653}, "2359.HK": {"name": "WUXI APPTEC (H)", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.56, "cum_m": -88.994, "bar_m": 5.187, "open": 191.1, "last": 186.0, "pct_chg": -2.6688, "hsi_pts": -3.4814}, "2382.HK": {"name": "SUNNY OPTICAL", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.24, "cum_m": 28.329, "bar_m": 11.577, "open": 63.5, "last": 63.4, "pct_chg": -0.1575, "hsi_pts": -0.088}, "2388.HK": {"name": "BOC HONG KONG", "sector": "Financials", "sector_zh": "金融", "weight_pct": 1.1, "cum_m": 329.941, "bar_m": 41.41, "open": 49.78, "last": 50.75, "pct_chg": 1.9486, "hsi_pts": 4.993}, "2600.HK": {"name": "CHALCO (H)", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.18, "cum_m": -15.481, "bar_m": -5.194, "open": 7.05, "last": 7.11, "pct_chg": 0.8511, "hsi_pts": 0.3569}, "2618.HK": {"name": "JD LOGISTICS", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.18, "cum_m": 1.623, "bar_m": -0.838, "open": 9.855, "last": 9.855, "pct_chg": 0.0, "hsi_pts": 0.0}, "2628.HK": {"name": "CHINA LIFE (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 1.19, "cum_m": -31.44, "bar_m": -9.006, "open": 24.32, "last": 23.88, "pct_chg": -1.8092, "hsi_pts": -5.0152}, "2688.HK": {"name": "ENN ENERGY", "sector": "Utilities", "sector_zh": "公用事業", "weight_pct": 0.22, "cum_m": 2.551, "bar_m": -0.431, "open": 48.02, "last": 48.7, "pct_chg": 1.4161, "hsi_pts": 0.7257}, "2899.HK": {"name": "ZIJIN MINING (H)", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 1.23, "cum_m": 82.803, "bar_m": -20.636, "open": 28.0, "last": 27.86, "pct_chg": -0.5, "hsi_pts": -1.4326}, "3690.HK": {"name": "MEITUAN - W", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 2.86, "cum_m": 159.466, "bar_m": 54.477, "open": 69.05, "last": 71.6, "pct_chg": 3.693, "hsi_pts": 24.6033}, "3692.HK": {"name": "HANSOH PHARMA", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.3, "cum_m": 28.889, "bar_m": 12.138, "open": 33.18, "last": 32.48, "pct_chg": -2.1097, "hsi_pts": -1.4743}, "3750.HK": {"name": "CATL (H)", "sector": "Industrials", "sector_zh": "工業", "weight_pct": 0.77, "cum_m": -93.685, "bar_m": -31.261, "open": 336.0, "last": 339.0, "pct_chg": 0.8929, "hsi_pts": 1.6015}, "3968.HK": {"name": "CM BANK (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 1.12, "cum_m": 247.569, "bar_m": -25.729, "open": 53.5, "last": 54.4, "pct_chg": 1.6822, "hsi_pts": 4.3889}, "3988.HK": {"name": "BANK OF CHINA (H)", "sector": "Financials", "sector_zh": "金融", "weight_pct": 2.27, "cum_m": -84.891, "bar_m": -25.772, "open": 6.18, "last": 6.14, "pct_chg": -0.6472, "hsi_pts": -3.4225}, "3993.HK": {"name": "CMOC (H)", "sector": "Materials", "sector_zh": "原材料", "weight_pct": 0.36, "cum_m": -14.24, "bar_m": -12.348, "open": 12.22, "last": 12.3, "pct_chg": 0.6547, "hsi_pts": 0.549}, "6160.HK": {"name": "BEONE MEDICINES", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 1.6, "cum_m": -22.858, "bar_m": 14.909, "open": 225.0, "last": 222.0, "pct_chg": -1.3333, "hsi_pts": -4.9695}, "6181.HK": {"name": "LAOPU GOLD (H)", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.13, "cum_m": -11.444, "bar_m": 5.791, "open": 274.0, "last": 274.6, "pct_chg": 0.219, "hsi_pts": 0.0663}, "6618.HK": {"name": "JD HEALTH", "sector": "Healthcare", "sector_zh": "醫療保健", "weight_pct": 0.26, "cum_m": 60.473, "bar_m": 9.939, "open": 36.02, "last": 38.18, "pct_chg": 5.9967, "hsi_pts": 3.6319}, "6690.HK": {"name": "HAIER SMARTHOME (H)", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.3, "cum_m": 223.676, "bar_m": -2.143, "open": 18.84, "last": 19.94, "pct_chg": 5.8386, "hsi_pts": 4.0802}, "6862.HK": {"name": "HAIDILAO", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.13, "cum_m": 27.878, "bar_m": 1.827, "open": 9.075, "last": 9.42, "pct_chg": 3.8017, "hsi_pts": 1.1512}, "9618.HK": {"name": "JD - SW", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 1.03, "cum_m": 22.762, "bar_m": 49.055, "open": 99.25, "last": 100.7, "pct_chg": 1.461, "hsi_pts": 3.5053}, "9633.HK": {"name": "NONGFU SPRING (H)", "sector": "Consumer Staples", "sector_zh": "必需性消費", "weight_pct": 0.5, "cum_m": 159.174, "bar_m": 0.0, "open": 40.32, "last": 42.34, "pct_chg": 5.0099, "hsi_pts": 5.8352}, "9888.HK": {"name": "BIDU - SW", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 0.83, "cum_m": -399.96, "bar_m": 30.08, "open": 75.85, "last": 75.95, "pct_chg": 0.1318, "hsi_pts": 0.2549}, "9901.HK": {"name": "NEW ORIENTAL - S", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.22, "cum_m": 12.427, "bar_m": 11.882, "open": 38.26, "last": 38.54, "pct_chg": 0.7318, "hsi_pts": 0.3751}, "9961.HK": {"name": "TRIP.COM - S", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.72, "cum_m": 39.451, "bar_m": 0.002, "open": 301.2, "last": 309.6, "pct_chg": 2.7888, "hsi_pts": 4.6774}, "9988.HK": {"name": "BABA - W", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 8.0, "cum_m": 847.636, "bar_m": 153.109, "open": 95.4, "last": 97.45, "pct_chg": 2.1488, "hsi_pts": 40.0448}, "9992.HK": {"name": "POP MART", "sector": "Consumer Discretionary", "sector_zh": "非必需性消費", "weight_pct": 0.65, "cum_m": 120.442, "bar_m": 10.323, "open": 129.5, "last": 134.7, "pct_chg": 4.0154, "hsi_pts": 6.0799}, "9999.HK": {"name": "NTES", "sector": "Information Technology", "sector_zh": "資訊科技", "weight_pct": 2.02, "cum_m": 146.941, "bar_m": -7.852, "open": 174.0, "last": 177.2, "pct_chg": 1.8391, "hsi_pts": 8.6537}}, "sectors": {"Conglomerates": {"zh": "綜合企業", "cum_m": -90.18, "bar_m": -75.897}, "Consumer Discretionary": {"zh": "非必需性消費", "cum_m": 1979.975, "bar_m": 282.345}, "Consumer Staples": {"zh": "必需性消費", "cum_m": 699.87, "bar_m": 11.655}, "Energy": {"zh": "能源", "cum_m": 1227.935, "bar_m": 20.399}, "Financials": {"zh": "金融", "cum_m": 3020.227, "bar_m": -26.16}, "Healthcare": {"zh": "醫療保健", "cum_m": -355.362, "bar_m": 23.716}, "Industrials": {"zh": "工業", "cum_m": 13.092, "bar_m": -32.865}, "Information Technology": {"zh": "資訊科技", "cum_m": 214.393, "bar_m": 60.744}, "Materials": {"zh": "原材料", "cum_m": -64.493, "bar_m": -58.936}, "Properties & Construction": {"zh": "地產建築", "cum_m": 437.252, "bar_m": 2.6}, "Telecommunications": {"zh": "電訊", "cum_m": 309.152, "bar_m": 5.309}, "Utilities": {"zh": "公用事業", "cum_m": 295.747, "bar_m": 27.769}}}, "sectors": [{"en": "Financials", "zh": "金融"}, {"en": "Properties & Construction", "zh": "地產建築"}, {"en": "Information Technology", "zh": "資訊科技"}, {"en": "Consumer Discretionary", "zh": "非必需性消費"}, {"en": "Consumer Staples", "zh": "必需性消費"}, {"en": "Energy", "zh": "能源"}, {"en": "Materials", "zh": "原材料"}, {"en": "Industrials", "zh": "工業"}, {"en": "Utilities", "zh": "公用事業"}, {"en": "Telecommunications", "zh": "電訊"}, {"en": "Healthcare", "zh": "醫療保健"}, {"en": "Conglomerates", "zh": "綜合企業"}], "slim": true, "series": []}</script>
+<script>
+let DATA = JSON.parse(document.getElementById('data').textContent);
+const HAS_API = ['127.0.0.1','localhost'].includes(location.hostname);
+let mode = 'sector'; // sector | pts
+let idx = 0;
+let playing = false;
+let timer = null;
+let pollTimer = null;
+let xmaxFlow = 1;
+let xmaxPts = 1;
+let sectorFilter = '';
+const POLL_MS = 5000;
+
+function setStatus(msg, live){
+  const el = document.getElementById('refreshStatus');
+  if(el) el.innerHTML = `<span class="live-dot ${live?'':'off'}"></span>${msg}`;
+}
+
+function fillSectorSelect(){
+  const sel = document.getElementById('sectorFilter');
+  const cur = sel.value;
+  const secs = DATA.sectors || [];
+  sel.innerHTML = '<option value="">All sectors</option>' +
+    secs.map(s => `<option value="${s.en}">${s.zh||s.en}</option>`).join('');
+  if([...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
+
+function stocksAt(i){
+  const snap = (DATA.series||[])[i];
+  if(!snap) return Object.values(DATA.latest_stocks||[]).map(r => ({
+    ticker: r.ticker, name: r.name, sector: r.sector, sector_zh: r.sector_zh,
+    cum: r.cum_m||0, pct: r.pct_chg||0, pts: r.hsi_pts||0, w: r.weight_pct||0
+  }));
+  return Object.entries(snap.stocks||{}).map(([t,d]) => ({
+    ticker: t, name: d.name, sector: d.sector, sector_zh: d.sector_zh,
+    cum: d.cum_m||0, pct: d.pct_chg||0, pts: d.hsi_pts||0, w: d.weight_pct||0
+  }));
+}
+
+function recomputeX(){
+  let mf=1, mp=1;
+  for(const snap of (DATA.series||[])){
+    for(const d of Object.values(snap.stocks||{})){
+      mf = Math.max(mf, Math.abs(d.cum_m||0));
+      mp = Math.max(mp, Math.abs(d.hsi_pts||0));
+    }
+  }
+  for(const r of (DATA.latest_stocks||[])){
+    mf = Math.max(mf, Math.abs(r.cum_m||0));
+    mp = Math.max(mp, Math.abs(r.hsi_pts||0));
+  }
+  xmaxFlow = mf * 1.08 || 1;
+  xmaxPts = mp * 1.08 || 1;
+}
+
+function metaCards(){
+  const el = document.getElementById('metaCards');
+  const live = DATA.live_poll || {};
+  const cards = [
+    {h:'Session', v: DATA.session_label || DATA.session_date || '—'},
+    {h:'As of (HKT)', v: DATA.as_of_hkt || '—'},
+    {h:'HSI level', v: DATA.hsi_level != null ? Number(DATA.hsi_level).toLocaleString() : '—'},
+    {h:'Tickers', v: String(DATA.n_tickers_downloaded || (DATA.latest_stocks||[]).length || '—')},
+    {h:'Generated', v: DATA.generated_at_hkt || '—'},
+    {h:'Live poll', v: live.polled_at_hkt || (HAS_API ? 'waiting…' : 'Pages snapshot')},
+  ];
+  el.innerHTML = cards.map(c => `<div class="card"><h2>${c.h}</h2><div class="meta-val">${c.v}</div></div>`).join('');
+}
+
+function barHtml(label, sub, val, xmax, suffix){
+  const pct = Math.min(50, (Math.abs(val) / xmax) * 50);
+  const pos = val >= 0;
+  const left = pos ? 50 : (50 - pct);
+  const cls = pos ? 'in' : 'out';
+  const valCls = pos ? 'pos' : 'neg';
+  const sign = pos ? '+' : '';
+  return `<div class="bar-row">
+    <div class="bar-label" title="${sub||''}">${label}<div class="code">${sub||''}</div></div>
+    <div class="bar-track"><div class="bar-fill ${cls}" style="left:${left}%;width:${pct}%"></div></div>
+    <div class="bar-val ${valCls}">${sign}${val.toLocaleString('en-US',{maximumFractionDigits: mode==='pts'?1:0})}${suffix}</div>
+  </div>`;
+}
+
+function renderSectorMode(rows){
+  document.getElementById('unitLine').textContent = '單位：百萬港元 · Chaikin cumulative from open';
+  const filtered = sectorFilter ? rows.filter(r => r.sector === sectorFilter) : rows;
+  // group by sector
+  const order = (DATA.sectors||[]).map(s => s.en);
+  const groups = {};
+  for(const r of filtered){
+    (groups[r.sector] = groups[r.sector] || []).push(r);
+  }
+  const keys = order.filter(k => groups[k]).concat(Object.keys(groups).filter(k => !order.includes(k)));
+  let html = '';
+  for(const k of keys){
+    const zh = (groups[k][0] && groups[k][0].sector_zh) || k;
+    const items = groups[k].slice().sort((a,b) => b.cum - a.cum);
+    html += `<div class="sector-h">${zh} · ${k}</div>`;
+    html += items.map(r => barHtml(
+      r.ticker.replace('.HK',''),
+      r.name,
+      r.cum,
+      xmaxFlow,
+      'M'
+    )).join('');
+  }
+  document.getElementById('chart').innerHTML = html || '<p class="warn">No stocks in filter</p>';
+
+  const topIn = filtered.filter(r=>r.cum>0).sort((a,b)=>b.cum-a.cum).slice(0,5);
+  const topOut = filtered.filter(r=>r.cum<0).sort((a,b)=>a.cum-b.cum).slice(0,5);
+  document.getElementById('tops').innerHTML =
+    `<div><strong class="bar-val pos">淨流入</strong>: ${topIn.map(r=>`${r.ticker.replace('.HK','')} ${r.cum>=0?'+':''}${r.cum.toFixed(0)}M`).join(' · ')||'—'}</div>
+     <div style="margin-top:.35rem"><strong class="bar-val neg">淨流出</strong>: ${topOut.map(r=>`${r.ticker.replace('.HK','')} ${r.cum.toFixed(0)}M`).join(' · ')||'—'}</div>`;
+}
+
+function renderPtsMode(rows){
+  document.getElementById('unitLine').textContent =
+    `Est. HSI pts from open · wt%×HSI×%chg · HSI≈${DATA.hsi_level||'—'}`;
+  let filtered = sectorFilter ? rows.filter(r => r.sector === sectorFilter) : rows;
+  filtered = filtered.slice().sort((a,b) => b.pts - a.pts);
+  const html = filtered.map(r => {
+    const pct = Math.min(50, (Math.abs(r.pts) / xmaxPts) * 50);
+    const pos = r.pts >= 0;
+    const left = pos ? 50 : (50 - pct);
+    const cls = pos ? 'in' : 'out';
+    const valCls = pos ? 'pos' : 'neg';
+    const sign = pos ? '+' : '';
+    return `<div class="bar-row pts">
+      <div class="bar-label">${r.ticker.replace('.HK','')}<div class="code">${r.name}</div></div>
+      <div class="num">${Number(r.w).toFixed(2)}%</div>
+      <div class="num ${r.pct>=0?'pos':'neg'}" style="color:${r.pct>=0?'var(--in)':'var(--out)'}">${r.pct>=0?'+':''}${r.pct.toFixed(2)}%</div>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="left:${left}%;width:${pct}%"></div></div>
+      <div class="bar-val ${valCls}">${sign}${r.pts.toFixed(1)} pts</div>
+    </div>`;
+  }).join('');
+  document.getElementById('chart').innerHTML = html || '<p class="warn">No data</p>';
+  const up = filtered.slice(0,5);
+  const down = filtered.slice().sort((a,b)=>a.pts-b.pts).slice(0,5);
+  document.getElementById('tops').innerHTML =
+    `<div><strong class="bar-val pos">+HSI pts</strong>: ${up.map(r=>`${r.ticker.replace('.HK','')} ${r.pts>=0?'+':''}${r.pts.toFixed(1)}`).join(' · ')||'—'}</div>
+     <div style="margin-top:.35rem"><strong class="bar-val neg">−HSI pts</strong>: ${down.map(r=>`${r.ticker.replace('.HK','')} ${r.pts.toFixed(1)}`).join(' · ')||'—'}</div>`;
+}
+
+function renderFrame(i){
+  const series = DATA.series||[];
+  const n = series.length;
+  if(n){
+    i = Math.max(0, Math.min(i, n-1));
+    idx = i;
+    document.getElementById('clock').textContent = series[i].clock || '--:--';
+  } else {
+    document.getElementById('clock').textContent = DATA.as_of_clock || '--:--';
+  }
+  document.getElementById('sessionLine').textContent =
+    `${DATA.session_label||''} · ${DATA.session_hours||'09:30–12:00 · 13:00–16:00 HKT'}`;
+  const live = DATA.live_poll || {};
+  document.getElementById('liveClock').textContent =
+    `Last data: ${DATA.generated_at_hkt||'—'} · poll ${live.polled_at_hkt||'—'} · quotes ${live.n_quotes||0}`;
+
+  const rows = stocksAt(n ? i : 0);
+  if(mode === 'pts') renderPtsMode(rows);
+  else renderSectorMode(rows);
+
+  const scrub = document.getElementById('scrubber');
+  scrub.max = String(Math.max(0, n-1));
+  scrub.value = String(idx);
+  document.getElementById('scrubLabel').textContent = n ? `${idx+1} / ${n}` : 'latest';
+  // Play only meaningful for sector Chaikin race
+  document.getElementById('playControls').style.opacity = (mode==='sector' && n>1) ? '1' : '0.45';
+}
+
+function renderAll(keepIdx){
+  recomputeX();
+  metaCards();
+  fillSectorSelect();
+  const n = (DATA.series||[]).length;
+  if(!keepIdx) idx = n ? n-1 : 0;
+  else idx = Math.min(idx, Math.max(0, n-1));
+  renderFrame(idx);
+}
+
+function applyData(j, keepPlay){
+  const wasPlaying = playing;
+  DATA = j;
+  renderAll(keepPlay);
+  if(wasPlaying && keepPlay){ /* leave play state; scrubber may extend */ }
+}
+
+async function softFetch(){
+  try{
+    // LIVE: slim /api/live (~latest only). Pages: stock_flow_live.json then full stock_flow.json once.
+    const url = HAS_API ? '/api/live' : (window.__fullLoaded ? 'stock_flow_live.json' : 'stock_flow.json');
+    const r = await fetch(url, {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json();
+    if(!j || (j.ok === false && !(j.series||j.latest_stocks))) throw new Error(j.error||'bad json');
+    if(j.slim || (j.latest_stocks && !j.series)){
+      // merge latest onto existing DATA; keep series for Play
+      DATA.generated_at_hkt = j.generated_at_hkt || DATA.generated_at_hkt;
+      DATA.as_of_hkt = j.as_of_hkt || DATA.as_of_hkt;
+      DATA.hsi_level = j.hsi_level != null ? j.hsi_level : DATA.hsi_level;
+      DATA.live_poll = j.live_poll || DATA.live_poll;
+      DATA.latest_stocks = j.latest_stocks || DATA.latest_stocks;
+      DATA.latest = j.latest || DATA.latest;
+      DATA.top_flow_in = j.top_flow_in || DATA.top_flow_in;
+      DATA.top_flow_out = j.top_flow_out || DATA.top_flow_out;
+      DATA.top_pts_up = j.top_pts_up || DATA.top_pts_up;
+      DATA.top_pts_down = j.top_pts_down || DATA.top_pts_down;
+      if(j.sectors) DATA.sectors = j.sectors;
+      renderAll(true);
+    } else {
+      applyData(j, true);
+      window.__fullLoaded = true;
+    }
+    setStatus(`LIVE soft-poll · ${j.generated_at_hkt||''} · every ${POLL_MS/1000}s`, true);
+    return true;
+  }catch(e){
+    setStatus(`Poll: ${e.message||e} · showing embedded/last`, HAS_API);
+    return false;
+  }
+}
+
+function startSoftPoll(){
+  if(pollTimer) clearInterval(pollTimer);
+  softFetch();
+  pollTimer = setInterval(softFetch, POLL_MS);
+}
+
+async function refreshNow(){
+  const btn = document.getElementById('btnRefresh');
+  if(!HAS_API){
+    setStatus('Pages is snapshot-only. Run: python3 server.py → http://127.0.0.1:8768/', false);
+    return;
+  }
+  if(btn) btn.disabled = true;
+  setStatus('Full rebuild (5m Chaikin)… may take ~1–2 min', true);
+  try{
+    const r = await fetch('/api/refresh', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error || 'refresh failed');
+    await softFetch();
+    setStatus(`Rebuilt · ${j.generated_at_hkt||''} · ${j.n_timestamps||0} bars`, true);
+  }catch(e){
+    setStatus('Rebuild failed: '+(e.message||e), false);
+  }finally{
+    if(btn) btn.disabled = false;
+  }
+}
+
+function stopPlay(){
+  playing = false;
+  if(timer){ clearInterval(timer); timer=null; }
+  const b = document.getElementById('btnPlay');
+  if(b){ b.textContent='Play'; b.classList.remove('active'); }
+}
+function startPlay(){
+  const series = DATA.series||[];
+  if(series.length < 2){ setStatus('Need ≥2 bars to Play', false); return; }
+  playing = true;
+  const b = document.getElementById('btnPlay');
+  if(b){ b.textContent='Pause'; b.classList.add('active'); }
+  const ms = Math.max(30, Math.min(180, 10000 / series.length));
+  timer = setInterval(()=>{
+    let n = idx + 1;
+    if(n >= series.length){ stopPlay(); return; }
+    renderFrame(n);
+  }, ms);
+}
+
+document.getElementById('btnRefresh').addEventListener('click', refreshNow);
+document.getElementById('btnPlay').addEventListener('click', ()=>{
+  if(playing) stopPlay(); else {
+    if(idx >= (DATA.series||[]).length-1) renderFrame(0);
+    startPlay();
+  }
+});
+document.getElementById('btnReset').addEventListener('click', ()=>{ stopPlay(); renderFrame(0); });
+document.getElementById('scrubber').addEventListener('input', (e)=>{
+  stopPlay(); renderFrame(Number(e.target.value)||0);
+});
+document.getElementById('sectorFilter').addEventListener('change', (e)=>{
+  sectorFilter = e.target.value || '';
+  renderFrame(idx);
+});
+document.querySelectorAll('[data-mode]').forEach(btn => {
+  btn.addEventListener('click', ()=>{
+    mode = btn.getAttribute('data-mode');
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b===btn));
+    renderFrame(idx);
+  });
+});
+
+renderAll(false);
+(async ()=>{
+  if(HAS_API && !(DATA.series||[]).length){
+    try{
+      const r = await fetch('/api/flow', {cache:'no-store'});
+      if(r.ok){ applyData(await r.json(), false); window.__fullLoaded = true; }
+    }catch(e){}
+  }
+  startSoftPoll();
+})();
+</script>
+</body>
+</html>
