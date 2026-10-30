@@ -38,6 +38,11 @@ python3 server.py                     # LIVE poller + HTTP
 
 Optional: `python3 server.py --no-live` to serve without the poller; `python3 server.py --bars-s 60` for faster Chaikin rebuilds.
 
+
+## Achievable refresh (observed)
+
+Client soft-polls every **5s** (slim JSON ~43KB). Server quote overlay for all 95 names via Yahoo batches currently takes **~8–12s** end-to-end after hours; the LIVE loop therefore **backs off to ~10–15s** automatically when a poll exceeds 4s (tries 5s first). Full Chaikin 5m rebuild remains **~1–2 min** on demand / every 120s. If Yahoo rate-limits, expect 15–30s.
+
 ## Formulas
 
 ```
